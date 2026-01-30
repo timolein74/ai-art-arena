@@ -33,6 +33,7 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
   const [timeLeft, setTimeLeft] = useState('');
   const [showSubmitModal, setShowSubmitModal] = useState(false);
+  const [selectedImage, setSelectedImage] = useState<LeaderboardEntry | null>(null);
 
   const handleSubmitSuccess = () => {
     fetch(`${API_URL}/api/leaderboard`)
@@ -222,12 +223,18 @@ export default function Home() {
                   key={i}
                   className="rounded-2xl overflow-hidden bg-white shadow-lg border border-gray-100 hover:shadow-xl transition-all duration-300"
                 >
-                  <div className="aspect-square bg-gradient-to-br from-purple-100 to-pink-100 relative">
+                  <div 
+                    className="aspect-square bg-gradient-to-br from-purple-100 to-pink-100 relative cursor-pointer group"
+                    onClick={() => setSelectedImage(entry)}
+                  >
                     <img 
                       src={entry.imageUrl} 
                       alt={entry.title}
-                      className="w-full h-full object-cover"
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                     />
+                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors flex items-center justify-center">
+                      <span className="opacity-0 group-hover:opacity-100 text-white text-2xl transition-opacity">🔍</span>
+                    </div>
                     <div className="absolute top-3 right-3 w-10 h-10 rounded-full bg-white shadow-lg flex items-center justify-center text-xl">
                       {i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `#${i + 1}`}
                     </div>
@@ -266,6 +273,37 @@ export default function Home() {
         onSuccess={handleSubmitSuccess}
         prizePoolAddress={PRIZE_POOL_ADDRESS}
       />
+
+      {/* Image Lightbox */}
+      {selectedImage && (
+        <div 
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in"
+          onClick={() => setSelectedImage(null)}
+        >
+          <div 
+            className="relative max-w-4xl max-h-[90vh] w-full animate-scale-in"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              onClick={() => setSelectedImage(null)}
+              className="absolute -top-12 right-0 text-white hover:text-gray-300 transition-colors"
+            >
+              <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+            <img 
+              src={selectedImage.imageUrl} 
+              alt={selectedImage.title}
+              className="w-full h-auto max-h-[80vh] object-contain rounded-2xl shadow-2xl"
+            />
+            <div className="mt-4 text-center">
+              <h3 className="text-xl font-bold text-white">{selectedImage.title}</h3>
+              <p className="text-gray-400 text-sm mt-1">by {selectedImage.playerAddress.slice(0, 6)}...{selectedImage.playerAddress.slice(-4)}</p>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 }
