@@ -4,6 +4,7 @@ import { z } from 'zod';
 import AIJudgeService from './services/ai-judge';
 import X402PaymentService from './services/x402-payment';
 import { setEntriesStorage, startCronScheduler, manualFinalize } from './services/game-automation';
+import * as db from './services/database';
 
 // Environment
 const PORT = parseInt(process.env.PORT || '3001');
@@ -86,6 +87,25 @@ app.get('/health', async () => {
 
 // Get current game
 app.get('/api/game', async () => {
+  // Try database first, fallback to in-memory
+  try {
+    if (process.env.DATABASE_URL) {
+      const gameData = await db.getOrCreateGame(currentGameId || 1);
+      const entries = await db.getEntriesForGame(gameData.gameId);
+      return {
+        gameId: gameData.gameId,
+        startTime: gameData.startTime,
+        endTime: gameData.endTime,
+        entryCount: entries.length,
+        prizePool: paymentService ? await paymentService.getPrizePoolBalance() : '0',
+        timeRemaining: Math.max(0, gameData.endTime - Date.now()),
+        finalized: gameData.finalized
+      };
+    }
+  } catch (e) {
+    console.log('Database not available, using in-memory');
+  }
+
   const game = games.get(currentGameId);
   if (!game) {
     return { error: 'No active game', gameId: null };
@@ -146,20 +166,7 @@ app.post('/api/submit', async (request, reply) => {
   }
 
   const { imageUrl, title, walletAddress, paymentTxHash } = parsed.data;
-  
-  const game = games.get(currentGameId);
-  if (!game || Date.now() > game.endTime) {
-    return reply.status(400).send({ error: 'No active game' });
-  }
-
-  // Check if already entered
-  const alreadyEntered = game.submissions.some(
-    s => s.playerAddress.toLowerCase() === walletAddress.toLowerCase()
-  );
-  
-  if (alreadyEntered) {
-    return reply.status(400).send({ error: 'Already entered this game' });
-  }
+  const gameId = currentGameId || 1;
 
   // Verify payment
   if (!paymentService) {
@@ -172,6 +179,48 @@ app.post('/api/submit', async (request, reply) => {
       error: 'Payment verification failed', 
       details: verification.error 
     });
+  }
+
+  // Try database first
+  try {
+    if (process.env.DATABASE_URL) {
+      // Check if already entered
+      const alreadyEntered = await db.hasPlayerEntered(gameId, walletAddress);
+      if (alreadyEntered) {
+        return reply.status(400).send({ error: 'Already entered this game' });
+      }
+
+      // Add to database
+      const entry = await db.addEntry(gameId, imageUrl, title, walletAddress, paymentTxHash);
+      await db.updateGamePrizePool(gameId, '0.05');
+
+      const entries = await db.getEntriesForGame(gameId);
+      return {
+        success: true,
+        submission: {
+          id: entry.id,
+          title: title,
+          position: entries.length
+        }
+      };
+    }
+  } catch (e) {
+    console.log('Database error, using in-memory:', e);
+  }
+
+  // Fallback to in-memory
+  const game = games.get(currentGameId);
+  if (!game || Date.now() > game.endTime) {
+    return reply.status(400).send({ error: 'No active game' });
+  }
+
+  // Check if already entered
+  const alreadyEntered = game.submissions.some(
+    s => s.playerAddress.toLowerCase() === walletAddress.toLowerCase()
+  );
+  
+  if (alreadyEntered) {
+    return reply.status(400).send({ error: 'Already entered this game' });
   }
 
   // Create submission
@@ -204,6 +253,29 @@ app.post('/api/submit', async (request, reply) => {
 
 // Get leaderboard
 app.get('/api/leaderboard', async () => {
+  const gameId = currentGameId || 1;
+
+  // Try database first
+  try {
+    if (process.env.DATABASE_URL) {
+      const entries = await db.getEntriesForGame(gameId);
+      return {
+        gameId: gameId,
+        entries: entries.map((e, i) => ({
+          position: i + 1,
+          title: e.title,
+          imageUrl: e.imageUrl,
+          playerAddress: e.playerAddress,
+          submittedAt: e.submittedAt,
+          isWinner: e.isWinner
+        })),
+        finalized: false
+      };
+    }
+  } catch (e) {
+    console.log('Database error, using in-memory');
+  }
+
   const game = games.get(currentGameId);
   if (!game) {
     return { entries: [], gameId: null };
@@ -221,6 +293,43 @@ app.get('/api/leaderboard', async () => {
     finalized: game.finalized,
     winnerId: game.winnerId
   };
+});
+
+// Get history of past games
+app.get('/api/history', async () => {
+  try {
+    if (process.env.DATABASE_URL) {
+      const pastGames = await db.getPastGames(10);
+      const stats = await db.getStats();
+      return {
+        games: pastGames,
+        stats
+      };
+    }
+  } catch (e) {
+    console.log('Database error:', e);
+  }
+
+  return {
+    games: [],
+    stats: { totalGames: 0, totalEntries: 0, totalPrizeDistributed: '0', uniquePlayers: 0 }
+  };
+});
+
+// Get entries for a specific game
+app.get('/api/game/:gameId/entries', async (request) => {
+  const { gameId } = request.params as { gameId: string };
+  
+  try {
+    if (process.env.DATABASE_URL) {
+      const entries = await db.getAllEntriesForGame(parseInt(gameId));
+      return { entries };
+    }
+  } catch (e) {
+    console.log('Database error:', e);
+  }
+
+  return { entries: [] };
 });
 
 // ============ Admin Routes ============
@@ -353,6 +462,18 @@ const start = async () => {
   try {
     // Start with an initial game (24 hours)
     currentGameId = 1;
+    // Initialize database if configured
+    if (process.env.DATABASE_URL) {
+      try {
+        await db.initDatabase();
+        console.log('✅ PostgreSQL database connected');
+      } catch (e) {
+        console.log('⚠️ Database initialization failed, using in-memory storage:', e);
+      }
+    } else {
+      console.log('⚠️ DATABASE_URL not set - using in-memory storage (data will be lost on restart)');
+    }
+
     games.set(1, {
       id: 1,
       startTime: Date.now(),
@@ -372,6 +493,7 @@ const start = async () => {
     console.log(`🎨 AI Art Arena backend running on port ${PORT}`);
     console.log(`📊 Current game: #${currentGameId}`);
     console.log(`⏰ Auto-finalization: Daily at 00:00 UTC`);
+    console.log(`💾 Storage: ${process.env.DATABASE_URL ? 'PostgreSQL' : 'In-memory'}`);
   } catch (err) {
     app.log.error(err);
     process.exit(1);
