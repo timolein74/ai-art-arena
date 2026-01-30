@@ -2,7 +2,7 @@ import cron from 'node-cron';
 import { createPublicClient, createWalletClient, http, parseUnits, formatUnits } from 'viem';
 import { baseSepolia } from 'viem/chains';
 import { privateKeyToAccount } from 'viem/accounts';
-import { judgeArtworks, ArtSubmission } from './ai-judge';
+import { judgeArtworks, SimpleArtSubmission } from './ai-judge';
 
 // Contract addresses
 const PRIZE_POOL_ADDRESS = process.env.PRIZE_POOL_ADDRESS as `0x${string}`;
@@ -145,7 +145,7 @@ export async function finalizeCurrentGame(): Promise<{
 
     // Judge all entries with AI
     console.log(`🤖 Judging ${entries.length} entries with AI...`);
-    const submissions: ArtSubmission[] = entries.map((e, i) => ({
+    const submissions: SimpleArtSubmission[] = entries.map((e, i) => ({
       id: i.toString(),
       imageUrl: e.imageUrl,
       title: e.title,
@@ -232,7 +232,7 @@ async function finalizeWithoutContract(): Promise<{
 
   // Judge all entries with AI
   console.log(`🤖 Judging ${entries.length} entries with AI...`);
-  const submissions: ArtSubmission[] = entries.map((e, i) => ({
+  const submissions: SimpleArtSubmission[] = entries.map((e, i) => ({
     id: i.toString(),
     imageUrl: e.imageUrl,
     title: e.title,

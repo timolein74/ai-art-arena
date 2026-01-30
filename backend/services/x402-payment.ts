@@ -36,7 +36,7 @@ export class X402PaymentService {
   private chain: typeof base | typeof baseSepolia;
   private usdcAddress: `0x${string}`;
   private prizePoolAddress: `0x${string}`;
-  private publicClient: ReturnType<typeof createPublicClient>;
+  private publicClient: any;
 
   constructor(
     prizePoolAddress: string,
