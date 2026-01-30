@@ -7,13 +7,31 @@ import { setEntriesStorage, startCronScheduler, manualFinalize } from '../servic
 
 // Environment
 const PORT = parseInt(process.env.PORT || '3001');
-const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY!;
+const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY || '';
 const PRIZE_POOL_ADDRESS = process.env.PRIZE_POOL_ADDRESS || '0x0000000000000000000000000000000000000000';
 const IS_TESTNET = process.env.NODE_ENV !== 'production';
 
-// Services
-const aiJudge = new AIJudgeService(ANTHROPIC_API_KEY);
-const paymentService = new X402PaymentService(PRIZE_POOL_ADDRESS, IS_TESTNET);
+// Services - initialized lazily to prevent startup crashes
+let aiJudge: AIJudgeService | null = null;
+let paymentService: X402PaymentService | null = null;
+
+try {
+  if (ANTHROPIC_API_KEY) {
+    aiJudge = new AIJudgeService(ANTHROPIC_API_KEY);
+    console.log('✅ AI Judge service initialized');
+  } else {
+    console.log('⚠️ ANTHROPIC_API_KEY not set - AI judging disabled');
+  }
+} catch (e) {
+  console.log('⚠️ AI Judge service failed to initialize:', e);
+}
+
+try {
+  paymentService = new X402PaymentService(PRIZE_POOL_ADDRESS, IS_TESTNET);
+  console.log('✅ Payment service initialized');
+} catch (e) {
+  console.log('⚠️ Payment service failed to initialize:', e);
+}
 
 // In-memory storage (replace with DB in production)
 interface Submission {
@@ -76,7 +94,7 @@ app.get('/api/game', async () => {
     startTime: game.startTime,
     endTime: game.endTime,
     entryCount: game.submissions.length,
-    prizePool: await paymentService.getPrizePoolBalance(),
+    prizePool: paymentService ? await paymentService.getPrizePoolBalance() : '0',
     timeRemaining: Math.max(0, game.endTime - Date.now()),
     finalized: game.finalized
   };
@@ -98,6 +116,10 @@ app.post('/api/pay', async (request, reply) => {
   
   if (alreadyEntered) {
     return reply.status(400).send({ error: 'Already entered this game' });
+  }
+
+  if (!paymentService) {
+    return reply.status(500).send({ error: 'Payment service not available' });
   }
 
   const paymentIntent = paymentService.createPaymentIntent(currentGameId, walletAddress);
@@ -138,6 +160,10 @@ app.post('/api/submit', async (request, reply) => {
   }
 
   // Verify payment
+  if (!paymentService) {
+    return reply.status(500).send({ error: 'Payment service not available' });
+  }
+  
   const verification = await paymentService.verifyPayment(paymentTxHash as `0x${string}`);
   if (!verification.valid) {
     return reply.status(402).send({ 
