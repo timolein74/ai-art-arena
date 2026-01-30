@@ -1,6 +1,9 @@
 import cron from 'node-cron';
 import { createPublicClient, createWalletClient, http, parseUnits, formatUnits } from 'viem';
-import { baseSepolia } from 'viem/chains';
+import { base, baseSepolia } from 'viem/chains';
+
+const IS_MAINNET = process.env.NODE_ENV === 'production';
+const CHAIN = IS_MAINNET ? base : baseSepolia;
 import { privateKeyToAccount } from 'viem/accounts';
 import { judgeArtworks, SimpleArtSubmission } from './ai-judge';
 
@@ -66,7 +69,7 @@ export function setEntriesStorage(storage: Map<number, any[]>) {
 // Create blockchain clients
 function getClients() {
   const publicClient = createPublicClient({
-    chain: baseSepolia,
+    chain: CHAIN,
     transport: http()
   });
 
@@ -77,7 +80,7 @@ function getClients() {
   const account = privateKeyToAccount(ADMIN_PRIVATE_KEY);
   const walletClient = createWalletClient({
     account,
-    chain: baseSepolia,
+    chain: CHAIN,
     transport: http()
   });
 
