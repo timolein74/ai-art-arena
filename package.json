@@ -1,0 +1,42 @@
+{
+  "name": "ai-art-arena",
+  "version": "0.1.0",
+  "description": "x402-powered daily art competition by AsterPay",
+  "private": true,
+  "workspaces": [
+    "frontend",
+    "backend",
+    "contracts"
+  ],
+  "scripts": {
+    "dev": "concurrently \"pnpm --filter frontend dev\" \"pnpm --filter backend dev\"",
+    "build": "pnpm --filter frontend build && pnpm --filter backend build",
+    "test": "pnpm --filter contracts test",
+    "deploy:testnet": "pnpm --filter contracts deploy:testnet",
+    "deploy:mainnet": "pnpm --filter contracts deploy:mainnet"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2",
+    "typescript": "^5.3.3"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "pnpm": ">=8.0.0"
+  },
+  "author": "AsterPay",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/AsterPay/ai-art-arena"
+  },
+  "keywords": [
+    "x402",
+    "ai",
+    "art",
+    "competition",
+    "crypto",
+    "base",
+    "usdc",
+    "micropayments"
+  ]
+}

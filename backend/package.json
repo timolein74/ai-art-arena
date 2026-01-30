@@ -1,0 +1,26 @@
+{
+  "name": "@ai-art-arena/backend",
+  "version": "0.1.0",
+  "description": "AI Art Arena backend API",
+  "main": "dist/index.js",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc",
+    "start": "node dist/index.js"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.32.1",
+    "@asterpay-io/x402": "^1.0.0",
+    "@fastify/cors": "^9.0.1",
+    "fastify": "^4.26.0",
+    "node-cron": "^4.2.1",
+    "viem": "^2.21.0",
+    "zod": "^3.22.4"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "@types/node-cron": "^3.0.11",
+    "tsx": "^4.7.0",
+    "typescript": "^5.3.3"
+  }
+}
