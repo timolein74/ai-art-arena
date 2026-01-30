@@ -121,6 +121,10 @@ export function SubmitModal({ isOpen, onClose, onSuccess, prizePoolAddress }: Su
     setStep('submit');
 
     try {
+      // Add timeout to prevent hanging
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
+
       const response = await fetch(`${API_URL}/api/submit`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -130,10 +134,13 @@ export function SubmitModal({ isOpen, onClose, onSuccess, prizePoolAddress }: Su
           walletAddress: address,
           paymentTxHash: transferHash,
         }),
+        signal: controller.signal,
       });
 
+      clearTimeout(timeoutId);
+
       if (!response.ok) {
-        const data = await response.json();
+        const data = await response.json().catch(() => ({}));
         throw new Error(data.error || 'Submission failed');
       }
 
@@ -141,10 +148,14 @@ export function SubmitModal({ isOpen, onClose, onSuccess, prizePoolAddress }: Su
       setTimeout(() => {
         onSuccess();
         onClose();
-      }, 2500);
+      }, 1500); // Reduced from 2500ms
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Submission failed');
-      setStep('pay');
+      if (err instanceof Error && err.name === 'AbortError') {
+        setError('Request timed out. Your payment was received - please refresh the page.');
+      } else {
+        setError(err instanceof Error ? err.message : 'Submission failed');
+      }
+      setStep('upload'); // Go back to upload so user can close
     }
   };
 
