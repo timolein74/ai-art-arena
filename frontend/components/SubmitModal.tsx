@@ -7,7 +7,7 @@ import ImageUpload from './ImageUpload';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
-// USDC on Base Sepolia
+// USDC on Base mainnet
 const USDC_ADDRESS = '0x036CbD53842c5426634e7929541eC2318f3dCF7e';
 const ENTRY_FEE = parseUnits('0.05', 6); // $0.05
 
@@ -309,7 +309,7 @@ export function SubmitModal({ isOpen, onClose, onSuccess, prizePoolAddress }: Su
 
               {/* Help Text */}
               <p className="text-center text-xs text-gray-400 mt-4">
-                Powered by AsterPay x402 on Base Sepolia
+                Powered by AsterPay x402 on Base
               </p>
             </>
           )}

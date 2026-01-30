@@ -114,7 +114,7 @@ export default function Home() {
                 <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-purple-100 text-purple-600 border border-purple-200">
                   x402
                 </span>
-                <span className="text-xs text-purple-500">Base Sepolia</span>
+                <span className="text-xs text-purple-500">Base</span>
               </div>
             </div>
           </div>

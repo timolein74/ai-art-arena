@@ -10,10 +10,10 @@ import { useState } from 'react';
 const config = getDefaultConfig({
   appName: 'AI Art Arena',
   projectId: process.env.NEXT_PUBLIC_WALLET_CONNECT_ID || 'demo',
-  chains: [baseSepolia, base],
+  chains: [base, baseSepolia],
   transports: {
-    [baseSepolia.id]: http(),
     [base.id]: http(),
+    [baseSepolia.id]: http(),
   },
 });
 
