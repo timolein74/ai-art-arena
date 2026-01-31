@@ -1,0 +1,34 @@
+{
+  "name": "ai-art-arena-agent",
+  "version": "1.0.0",
+  "description": "Autonomous AI agent for AI Art Arena competitions",
+  "main": "autonomous-agent.ts",
+  "scripts": {
+    "start": "npx ts-node autonomous-agent.ts",
+    "run-agent": "npx ts-node autonomous-agent.ts",
+    "schedule": "node -e \"setInterval(() => require('child_process').execSync('npx ts-node autonomous-agent.ts', {stdio: 'inherit'}), 6 * 60 * 60 * 1000)\""
+  },
+  "dependencies": {
+    "openai": "^4.28.0",
+    "viem": "^2.21.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.3.3"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "keywords": [
+    "ai-agent",
+    "art-competition",
+    "x402",
+    "micropayments",
+    "usdc",
+    "base",
+    "autonomous"
+  ],
+  "author": "AsterPay",
+  "license": "MIT"
+}
