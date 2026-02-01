@@ -8,6 +8,9 @@ const USDC_ADDRESSES = {
   baseSepolia: '0x036CbD53842c5426634e7929541eC2318f3dCF7e'
 } as const;
 
+// AsterPay wallet for receiving entry fees (same as frontend)
+const ASTERPAY_WALLET = '0x3a649f923c7e74E5c22e766F8E0fA2CF7e627e71';
+
 // Entry fee: $0.05 = 50000 (6 decimals)
 const ENTRY_FEE = BigInt(50000);
 
@@ -106,17 +109,19 @@ export class X402PaymentService {
         return { valid: false, error: 'Transaction failed' };
       }
 
-      // Check for USDC Transfer event to prize pool
+      // Check for USDC Transfer event to AsterPay wallet
       const transferTopic = '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef';
       
+      // Accept transfers to either AsterPay wallet or prize pool
       const transferLog = receipt.logs.find((log: any) => 
         log.address.toLowerCase() === this.usdcAddress.toLowerCase() &&
         log.topics[0] === transferTopic &&
-        log.topics[2]?.toLowerCase().includes(this.prizePoolAddress.slice(2).toLowerCase())
+        (log.topics[2]?.toLowerCase().includes(ASTERPAY_WALLET.slice(2).toLowerCase()) ||
+         log.topics[2]?.toLowerCase().includes(this.prizePoolAddress.slice(2).toLowerCase()))
       );
 
       if (!transferLog) {
-        return { valid: false, error: 'No transfer to prize pool found' };
+        return { valid: false, error: 'No transfer to AsterPay wallet found' };
       }
 
       // Decode amount from log data
