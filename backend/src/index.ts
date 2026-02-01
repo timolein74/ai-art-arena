@@ -151,8 +151,13 @@ app.post('/api/pay', async (request, reply) => {
   const { walletAddress } = request.body as { walletAddress: string };
   
   const game = games.get(currentGameId);
-  if (!game || Date.now() > game.endTime) {
+  if (!game || game.finalized) {
     return reply.status(400).send({ error: 'No active game' });
+  }
+  
+  // Only check endTime if game has started (endTime > 0)
+  if (game.endTime > 0 && Date.now() > game.endTime) {
+    return reply.status(400).send({ error: 'Game has ended, wait for next round' });
   }
 
   // Check if already entered
@@ -264,8 +269,13 @@ app.post('/api/submit', async (request, reply) => {
 
   // Fallback to in-memory
   const game = games.get(currentGameId);
-  if (!game || Date.now() > game.endTime) {
+  if (!game || game.finalized) {
     return reply.status(400).send({ error: 'No active game' });
+  }
+  
+  // Only check endTime if game has started (endTime > 0)
+  if (game.endTime > 0 && Date.now() > game.endTime) {
+    return reply.status(400).send({ error: 'Game has ended, wait for next round' });
   }
 
   // Check if already entered
