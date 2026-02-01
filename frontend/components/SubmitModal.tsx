@@ -13,7 +13,7 @@ const USDC_TESTNET = '0x036CbD53842c5426634e7929541eC2318f3dCF7e';
 const ENTRY_FEE = parseUnits('0.05', 6); // $0.05 USDC entry fee
 
 // AsterPay wallet for receiving entry fees (direct transfer, no smart contract needed)
-const ASTERPAY_WALLET = '0x3A649F923c7E74e5C22E766f8E0FA2CF7e627e71';
+const ASTERPAY_WALLET = '0x3a649f923c7e74E5c22e766F8E0fA2CF7e627e71';
 
 // Use mainnet in production, testnet in development
 const IS_MAINNET = process.env.NEXT_PUBLIC_CHAIN_ID === '8453';
