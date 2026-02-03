@@ -67,8 +67,8 @@ export async function initDatabase(): Promise<void> {
   }
 }
 
-// Game duration: 6 hours (in milliseconds)
-const GAME_DURATION_MS = 6 * 60 * 60 * 1000;
+// Game duration: 1 hour (in milliseconds)
+const GAME_DURATION_MS = 1 * 60 * 60 * 1000;
 
 // Game operations
 export async function getOrCreateGame(gameId: number): Promise<{
@@ -121,7 +121,7 @@ export async function getOrCreateGame(gameId: number): Promise<{
 // Start game timer when first entry arrives
 export async function startGameTimer(gameId: number): Promise<{ startTime: number; endTime: number; updated: boolean }> {
   const now = Date.now();
-  const endTime = now + GAME_DURATION_MS; // 6 hours from now
+  const endTime = now + GAME_DURATION_MS; // 1 hour from now
 
   const result = await pool.query(
     'UPDATE games SET start_time = $1, end_time = $2, started = TRUE WHERE game_id = $3 AND started = FALSE RETURNING end_time',

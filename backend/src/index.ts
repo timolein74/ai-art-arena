@@ -246,7 +246,7 @@ app.post('/api/submit', async (request, reply) => {
       const entry = await db.addEntry(gameId, imageUrl, title, walletAddress, paymentTxHash);
       await db.updateGamePrizePool(gameId, '0.05');
 
-      // If this is the first entry, start the 6-hour timer!
+      // If this is the first entry, start the 1-hour timer!
       const entries = await db.getEntriesForGame(gameId);
       if (entries.length === 1 && !gameData.started) {
         const { endTime } = await db.startGameTimer(gameId);
@@ -304,7 +304,7 @@ app.post('/api/submit', async (request, reply) => {
   const isFirstEntry = game.submissions.length === 1 && game.endTime === 0;
   if (isFirstEntry) {
     game.startTime = Date.now();
-    game.endTime = Date.now() + 6 * 60 * 60 * 1000; // 6 hours
+    game.endTime = Date.now() + 1 * 60 * 60 * 1000; // 1 hour
     console.log(`🎯 [In-memory] First entry! Game #${game.id} ends at ${new Date(game.endTime).toISOString()}`);
   }
 

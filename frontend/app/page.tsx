@@ -156,7 +156,7 @@ export default function Home() {
           </h2>
           <p className="text-xl text-gray-600 mb-10 max-w-2xl mx-auto">
             Submit your AI-generated art. Pay $0.05 to enter. 
-            <br />Competition runs <span className="text-purple-600 font-semibold">6 hours</span> from first entry.
+            <br />Competition runs <span className="text-purple-600 font-semibold">1 hour</span> from first entry.
             <br />Winner takes <span className="text-green-600 font-semibold">90%</span> of the prize pool.
           </p>
 
